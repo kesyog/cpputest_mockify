@@ -1,5 +1,8 @@
 # CppUTest mockify
 
+[![license: ISC](https://img.shields.io/github/license/kesyog/cpputest_mockify?style=flat-square)](https://github.com/kesyog/cpputest_mockify/blob/master/LICENSE)
+[![build status](https://img.shields.io/github/workflow/status/kesyog/cpputest_mockify/main-ci?style=flat-square)](https://github.com/kesyog/cpputest_mockify/actions)
+
 Easily generate mocks to be used with the [CppUTest mocking framework](https://cpputest.github.io/mocking_manual.html).
 lowering the barrier to writing C unit tests. Interested in how this can help you? Check out
 [this great post](https://interrupt.memfault.com/blog/unit-test-mocking) from the guys at [Memfault](https://github.com/memfault).
