@@ -9,7 +9,7 @@ lowering the barrier to writing C unit tests. Interested in how this can help yo
 To generate a .cpp mock file, run:
 
 ```
-cpputest_mockify <input_file.h> <output directory>
+cpputest_mockify.py <input_file.h> <output directory>
 ```
 
 Afterward, scan the output file for instances of `FIXME`, `CHECKME`, or `WRITEME`, indicating areas
