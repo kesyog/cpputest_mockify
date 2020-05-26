@@ -1,0 +1,3 @@
+char *yolo(
+    int somarg
+);
