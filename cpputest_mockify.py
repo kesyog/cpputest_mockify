@@ -4,12 +4,32 @@ Utility for generating CppUTest mocks from header files.
 """
 
 from __future__ import print_function
+
 import argparse
 import datetime
 import os.path
 import re
 import subprocess
-from builtins import object, str, input
+import sys
+
+if sys.version_info < (3, 0, 0):
+    # pylint: disable=redefined-builtin,invalid-name,undefined-variable
+    input = raw_input
+
+try:
+    from shutil import which
+except ImportError:
+
+    def which(cmd):
+        """
+        cheesy version of which. rely on `command` shell builtin:
+        https://www.gnu.org/software/bash/manual/bash.html#Bash-Builtins
+        """
+        try:
+            output = subprocess.check_output("command -v {}".format(cmd), shell=True)
+            return output.encode()
+        except subprocess.CalledProcessError:
+            return None
 
 
 HEADER = """
@@ -51,6 +71,7 @@ class MockError(Exception):
 
     def __init__(self, value):
         self.value = value
+        super(MockError, self).__init__()
 
     def __str__(self):
         return repr(self.value)
@@ -113,8 +134,8 @@ class FunctionParser(object):
         try:
             self.parse_declaration(declaration)
             self.generate_body()
-        except MockError as e:
-            print(e)
+        except MockError as exception:
+            print(exception)
             if self.signature is None:
                 self.signature = declaration[:-1]  # chop off semicolon
             self.body = "{}\n{{\n  FIXME\n}}".format(self.signature)
@@ -197,17 +218,21 @@ class FunctionParser(object):
             and self.return_type.count("*") == 1
         ):
             return "returnStringValueOrDefault(WRITEME)"
-        elif "const" in self.return_type and "*" in self.return_type:
+
+        if "const" in self.return_type and "*" in self.return_type:
             return "returnConstPointerValueOrDefault(WRITEME)"
-        elif "*" in self.return_type:
+
+        if "*" in self.return_type:
             return "returnPointerValueOrDefault(WRITEME)"
-        elif self.return_type in self.KNOWN_RETURN_VALUES:
+
+        if self.return_type in self.KNOWN_RETURN_VALUES:
             return self.KNOWN_RETURN_VALUES[self.return_type]
+
         # Fallback behavior. Flag output type to be checked
-        elif "unsigned" in self.return_type or "uint" in self.return_type:
+        if "unsigned" in self.return_type or "uint" in self.return_type:
             return "returnUnsignedLongIntValueOrDefault(WRITEME)    /* CHECKME */"
-        else:
-            return "returnLongIntValueOrDefault(WRITEME)    /* CHECKME */"
+
+        return "returnLongIntValueOrDefault(WRITEME)    /* CHECKME */"
 
 
 def create_mock(input_filepath, output_folder):
@@ -263,6 +288,13 @@ def create_mock(input_filepath, output_folder):
 
         for match in FunctionParser.FUNC_REGEX.finditer(input_header):
             f_out.write("\n" + str(FunctionParser(match.group(0))) + "\n")
+
+    # with clang-format available, reflow the output file too!
+    if which("clang-format --help"):
+        print("Running clang-format on {}".format(output_filepath))
+        subprocess.check_call(
+            "clang-format -style=file -i {}".format(output_filepath), shell=True
+        )
 
     print('Wrote output to "{}"'.format(output_filepath))
     print("Make sure to review output file and search for FIXME, CHECKME, and WRITEME")
